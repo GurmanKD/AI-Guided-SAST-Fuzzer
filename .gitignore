@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+.env/
+
+# macOS
+.DS_Store
+
+# Outputs
+outputs/*
+!outputs/.gitkeep
+
+# Databases / tmp
+example.db
+*.sqlite
+*.log
+
+# Fuzzer-created junk
+ls
+echo
+whoami
+mkdir
+sleep
+key
+a:
+test
+Sun*
