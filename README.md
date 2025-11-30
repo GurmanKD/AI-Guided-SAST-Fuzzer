@@ -262,15 +262,6 @@ outputs/
 
 ---
 
-## 🔐 Security Guarantees
-
-✅ API key not committed  
-✅ .env ignored via .gitignore  
-✅ Database generated at runtime  
-✅ Output files excluded from Git  
-
----
-
 ## 🧠 Why This Works
 
 This is not random fuzzing.
@@ -289,7 +280,7 @@ It simulates:
 
 ---
 
-## 🏆 Skills Demonstrated
+## Skills Demonstrated
 
 - Static analysis
 - Python AST
@@ -301,9 +292,4 @@ It simulates:
 - Secure secrets handling
 - Automated reporting
 
----
-
-## ⭐ Like this project?
-
-Give it a star ⭐ and feel free to contribute.
 
