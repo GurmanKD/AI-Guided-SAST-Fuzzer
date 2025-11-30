@@ -7,7 +7,7 @@ An end-to-end **Static Application Security Testing (SAST) Scanner** that combin
 ✅ Directed fuzzing  
 ✅ Automated Proof-of-Vulnerability reporting  
 
-Built for the interview challenge: *SAST Scanner Builder*.
+<img width="843" height="203" alt="flow2 drawio" src="https://github.com/user-attachments/assets/46145767-4433-4a88-a788-d472dab24eab" />
 
 ---
 
