@@ -116,30 +116,30 @@ Payload generation uses:
 ### Examples
 
 ### Command Injection
-\`\`\`
+```
 ls && whoami
 echo test; id
 ; cat /etc/passwd
-\`\`\`
+```
 
 ### SQL Injection
-\`\`\`
+```
 ' OR '1'='1
 admin' --
 '; DROP TABLE users; --
-\`\`\`
+```
 
 ### Eval Injection
-\`\`\`
+```
 1/0
 __import__('os').system('ls')
-\`\`\`
+```
 
 ### Path Traversal
-\`\`\`
+```
 ../../etc/passwd
 C:\Windows\system.ini
-\`\`\`
+```
 
 ---
 
@@ -165,11 +165,11 @@ Each seed produces:
 
 ## 📄 Automatic Reporting
 
-\`reporter.py\` generates:
+`reporter.py` generates:
 
-\`\`\`
+```
 outputs/report.md
-\`\`\`
+```
 
 ### Report Includes:
 
@@ -185,38 +185,38 @@ outputs/report.md
 
 ### 1. Clone Repo
 
-\`\`\`bash
+```bash
 git clone https://github.com/GurmanKD/AI-Guided-SAST-Fuzzer
 cd AI-Guided-SAST-Fuzzer
-\`\`\`
+```
 
 ---
 
 ### 2. Setup Environment
 
-\`\`\`bash
+```bash
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-\`\`\`
+```
 
 ---
 
 ### 3. Configure Gemini (Optional)
 
-Create a \`.env\` file:
+Create a `.env\` file:
 
-\`\`\`
+```
 GEMINI_API_KEY=your_real_key_here
-\`\`\`
+```
 
 ---
 
 ### 4. Initialize Database
 
-\`\`\`bash
+```bash
 python init_db.py
-\`\`\`
+```
 
 Creates a SQLite DB:
 
@@ -230,18 +230,18 @@ Creates a SQLite DB:
 
 ### 5. Run Full Pipeline
 
-\`\`\`bash
+```bash
 python src/main.py
-\`\`\`
+```
 
 Or run step-by-step:
 
-\`\`\`bash
+```bash
 python src/static_analyzer.py
 python src/llm_seed_gen.py
 python src/fuzzer.py
 python src/reporter.py
-\`\`\`
+```
 
 ---
 
@@ -249,9 +249,9 @@ python src/reporter.py
 
 Generated inside:
 
-\`\`\`
+```
 outputs/
-\`\`\`
+```
 
 | File | Purpose |
 |------|--------|
@@ -306,4 +306,4 @@ It simulates:
 ## ⭐ Like this project?
 
 Give it a star ⭐ and feel free to contribute.
-EOF
+
