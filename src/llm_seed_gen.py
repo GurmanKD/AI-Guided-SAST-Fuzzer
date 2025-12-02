@@ -6,9 +6,20 @@ from typing import List, Dict, Any
 from dotenv import load_dotenv
 import google.generativeai as genai
 
+# ----------------- Logging Helper ----------------- #
+def LOG(msg):
+    print(f"[LLM_SEED_GEN] {msg}")
+
+LOG("Starting file load")
+
 load_dotenv()
+LOG("Environment variables loaded")
+
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+LOG("Gemini API configured")
+
 model = genai.GenerativeModel("gemini-flash-latest")
+LOG("Gemini model initialized")
 
 def infer_input_index(finding: Dict[str, Any]) -> int:
     """
@@ -127,6 +138,7 @@ Keep them as single-line Python expressions.
 """
     # other categories (pickle, yaml, xml) could be expanded if reachable from main()
 
+    LOG(f"Prompt built for sink {sink} in function {func}")
     return base.strip()
 
 
@@ -136,6 +148,8 @@ def call_llm_for_payloads(prompt: str) -> List[str]:
     Tries to be robust to weird finish_reason values.
     """
     try:
+        LOG("Calling Gemini API")
+
         resp = model.generate_content(
             prompt,
             generation_config={
@@ -168,9 +182,11 @@ def call_llm_for_payloads(prompt: str) -> List[str]:
             return []
 
         raw_text = "".join(texts).strip()
+        LOG("Raw model output received")
 
         # Strip ```json fences if the model adds them
         if raw_text.startswith("```"):
+            LOG("Stripping markdown fences from model output")
             raw_text = raw_text.strip("`")
             if "\n" in raw_text:
                 first, rest = raw_text.split("\n", 1)
@@ -180,9 +196,11 @@ def call_llm_for_payloads(prompt: str) -> List[str]:
         data = json.loads(raw_text)
 
         if isinstance(data, list):
+            LOG(f"Parsed {len(data)} payloads")
             return [str(x) for x in data]
 
         if isinstance(data, dict) and isinstance(data.get("payloads"), list):
+            LOG(f"Parsed {len(data['payloads'])} payloads (nested)")
             return [str(x) for x in data["payloads"]]
 
         print("[WARN] Gemini JSON structure unexpected; using fallback seeds.")
@@ -197,6 +215,8 @@ def fallback_payloads(cat: str) -> List[str]:
     """
     Hard-coded seed payloads if LLM is unavailable.
     """
+    LOG(f"Using fallback payloads for category {cat}")
+
     if cat == "command":
         return [
             "ls",
@@ -234,10 +254,16 @@ def fallback_payloads(cat: str) -> List[str]:
 
 
 def generate_seeds(analysis_path: str, seeds_path: str):
+    LOG(f"Loading analysis file {analysis_path}")
+
     findings = json.loads(Path(analysis_path).read_text())
     seeds = []
 
+    LOG(f"{len(findings)} findings loaded")
+
     for i, f in enumerate(findings):
+        LOG(f"Processing finding {i}")
+
         cat = sink_category(f)
         prompt = build_prompt_for_finding(f)
 
@@ -265,4 +291,7 @@ if __name__ == "__main__":
     analysis_file = "outputs/analysis.json"
     seeds_file = "outputs/seeds.json"
     Path("outputs").mkdir(exist_ok=True)
+
+    LOG("Seed generation started")
     generate_seeds(analysis_file, seeds_file)
+    LOG("Seed generation finished")
