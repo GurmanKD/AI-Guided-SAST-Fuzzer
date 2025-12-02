@@ -24,6 +24,10 @@ import json
 from pathlib import Path
 from typing import Optional, List, Set, Dict, Any
 
+# ----------------- Logging Helper ----------------- #
+def LOG(msg):
+    print(f"[STATIC_ANALYZER] {msg}")
+
 # --- Configuration: sources & sinks tailored to your test.py --- #
 
 # Direct function calls that are dangerous, e.g. eval(expr), open(filename)
@@ -66,6 +70,8 @@ class PythonStaticAnalyzer(ast.NodeVisitor):
 
         # Collected findings
         self.findings: List[Dict[str, Any]] = []
+
+        LOG(f"Initialized analyzer for {filename}")
 
     # ----------------- Utility helpers ----------------- #
 
@@ -138,6 +144,9 @@ class PythonStaticAnalyzer(ast.NodeVisitor):
         self.tainted_vars_stack.append(tainted_params)
         self.conditions_stack.append([])
 
+        LOG(f"Entering function {node.name} at line {node.lineno}")
+        LOG(f"Initial tainted params: {tainted_params}")
+
         # Visit body
         self.generic_visit(node)
 
@@ -145,6 +154,8 @@ class PythonStaticAnalyzer(ast.NodeVisitor):
         self.tainted_vars_stack.pop()
         self.conditions_stack.pop()
         self.current_function = prev_function
+
+        LOG(f"Exiting function {node.name}")
 
     def visit_Assign(self, node: ast.Assign):
         """
@@ -160,12 +171,14 @@ class PythonStaticAnalyzer(ast.NodeVisitor):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         current_tainted.add(target.id)
+                        LOG(f"Taint source: {target.id} = input() at line {node.lineno}")
 
         # Case 2: x = y where y is tainted
         if isinstance(node.value, ast.Name) and node.value.id in current_tainted:
             for target in node.targets:
                 if isinstance(target, ast.Name):
                     current_tainted.add(target.id)
+                    LOG(f"Taint propagated: {target.id} = {node.value.id} at line {node.lineno}")
 
         self.generic_visit(node)
 
@@ -182,12 +195,15 @@ class PythonStaticAnalyzer(ast.NodeVisitor):
         cond_str = self._expr_to_str(node.test)
         self._current_conditions().append(cond_str)
 
+        LOG(f"Entering IF condition: {cond_str} at line {node.lineno}")
+
         # Visit body under this condition
         for stmt in node.body:
             self.visit(stmt)
 
         # Remove condition after body
         self._current_conditions().pop()
+        LOG(f"Leaving IF condition: {cond_str}")
 
         # Visit else/elif without that condition (simple model)
         for stmt in node.orelse:
@@ -224,6 +240,7 @@ class PythonStaticAnalyzer(ast.NodeVisitor):
 
         # If this is a sink, analyze tainted args
         if sink_name is not None:
+            LOG(f"Sink detected: {(sink_module + '.' if sink_module else '')}{sink_name} at line {node.lineno}")
             self._handle_sink_call(node, sink_name, sink_module)
 
         # Continue walking
@@ -241,10 +258,14 @@ class PythonStaticAnalyzer(ast.NodeVisitor):
 
         for arg in node.args:
             if self._expr_is_tainted(arg, tainted):
-                tainted_exprs.append(self._expr_to_str(arg))
+                expr = self._expr_to_str(arg)
+                tainted_exprs.append(expr)
+                LOG(f"Tainted argument to sink {sink_name}: {expr} at line {node.lineno}")
 
         if not tainted_exprs:
             return  # no tainted data reaching this sink (in our simple model)
+
+        LOG(f"Vulnerability confirmed in function {self.current_function} for sink {sink_name}")
 
         finding = {
             "file": self.filename,
@@ -267,7 +288,9 @@ class PythonStaticAnalyzer(ast.NodeVisitor):
 
     def analyze(self) -> List[Dict[str, Any]]:
         """Run the analysis and return the list of findings."""
+        LOG("Starting AST traversal")
         self.visit(self.tree)
+        LOG("Finished AST traversal")
         return self.findings
 
 
@@ -278,10 +301,15 @@ def analyze_file(filepath: str, output_path: str):
     - run analyzer
     - write JSON findings to output_path
     """
+    LOG(f"Reading source file {filepath}")
     code = Path(filepath).read_text()
+
     analyzer = PythonStaticAnalyzer(code, filepath)
     findings = analyzer.analyze()
+
     Path(output_path).write_text(json.dumps(findings, indent=2))
+    LOG(f"Results written to {output_path}")
+    LOG(f"Total findings: {len(findings)}")
     return findings
 
 
@@ -293,4 +321,7 @@ if __name__ == "__main__":
     output_file = sys.argv[2] if len(sys.argv) > 2 else "outputs/analysis.json"
 
     Path("outputs").mkdir(exist_ok=True)
+
+    LOG("Static analysis started")
     analyze_file(input_file, output_file)
+    LOG("Static analysis finished")
